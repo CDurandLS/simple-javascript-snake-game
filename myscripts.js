@@ -5,7 +5,7 @@ var left = false;
 var right = false;
 var snake;
 var food;
-var turningSpeed = ((Math.PI*2)/30)/1.5;
+
 window.addEventListener( "keydown", doKeyDown, true);
 window.addEventListener( "keyup", doKeyUp, true);
 let Snake = function(startx, starty) {
@@ -13,6 +13,7 @@ let Snake = function(startx, starty) {
   this.bodyLength = 1;
   this.body = [new BodyPart(startx, starty, 0, 0)];
   this.dead = false;
+  this.turningSpeed = ((Math.PI*2)/30)/1.5;
 };
 Snake.prototype.move = function() {
   this.body[0].moveAlone(this.speed);
@@ -42,11 +43,18 @@ Snake.prototype.draw = function() {
   console.log("drawing the snake");
   this.body.forEach(part => part.draw());
 }
-Snake.prototype.turn = function(amount) {
-  this.body[0].heading += amount;
+Snake.prototype.turn = function(direction) {
+  if(direction == 'left'){
+    this.body[0].heading -= this.turningSpeed;
+  }
+  if(direction == 'right'){
+    this.body[0].heading += this.turningSpeed;
+  }
 }
 Snake.prototype.eat = function() {
   let tail = this.body[this.body.length-1];
+  this.turningSpeed *= 1.05;
+  this.speed *= 1.05;
   this.body.push(
     new BodyPart(
       tail.behindx(),
@@ -157,8 +165,8 @@ function writeInstructions() {
 }
 setUpGame();
 function gameUpdate() {
-  if (left)  { snake.turn(-turningSpeed); }
-  if (right) { snake.turn(+turningSpeed); }
+  if (left)  { snake.turn('left'); }
+  if (right) { snake.turn('right'); }
   snake.move();
   snake.checkIfDead();
   snake.checkIfAte();
