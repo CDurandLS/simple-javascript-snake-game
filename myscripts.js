@@ -5,6 +5,7 @@ var left = false;
 var right = false;
 var snake;
 var food;
+var framerate = 60;
 
 window.addEventListener( "keydown", doKeyDown, true);
 window.addEventListener( "keyup", doKeyUp, true);
@@ -13,11 +14,11 @@ let Point = function(sx, sy){
   this.y = sy;
 }
 let Snake = function(startx, starty) {
-  this.speed = 6;
+  this.speed = (framerate/20);
   this.bodyLength = 1;
   this.body = [new BodyPart(startx, starty, 0, 0)];
   this.dead = false;
-  this.turningSpeed = ((Math.PI*2)/30)/1.5;
+  this.turningSpeed = ((Math.PI*2)/30)/(framerate/20);
 };
 Snake.prototype.move = function() {
   this.body[0].moveAlone(this.speed);
@@ -240,5 +241,5 @@ function gameUpdate() {
   }
   draw();
 }
-setInterval(gameUpdate, 33);
+setInterval(gameUpdate, 1000/framerate);
 // setInterval(snake.eat, 1000);
