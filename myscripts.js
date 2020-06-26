@@ -161,6 +161,12 @@ function setUpGame() {
 function writeInstructions() {
   ctx.font = "30px Arial";
   ctx.textAlign = "center";
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0, 0, 800, 3);
+  ctx.fillRect(797, 0, 800, 800);
+  ctx.fillRect(0, 797, 800, 800);
+  ctx.fillRect(0, 0, 3, 800);
+
   ctx.fillText("Use the left and right arrow keys to move the snake.", 400, 50);
 }
 setUpGame();
