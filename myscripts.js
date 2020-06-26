@@ -8,6 +8,10 @@ var food;
 
 window.addEventListener( "keydown", doKeyDown, true);
 window.addEventListener( "keyup", doKeyUp, true);
+let Point = function(sx, sy){
+  this.x = sx;
+  this.y = sy;
+}
 let Snake = function(startx, starty) {
   this.speed = 6;
   this.bodyLength = 1;
@@ -21,6 +25,18 @@ Snake.prototype.move = function() {
     this.body[i].moveToLeader();
   }
   this.checkIfDead();
+}
+Snake.prototype.getPolyPoints = function() {
+  let points = [];
+  let rightPoints = [];
+  for (let i=0; i < this.body.length;i++){
+    points.push(this.body[i].leftSidePoint());
+  }
+  for (let i=0; i < this.body.length;i++){
+    let j = this.body.length - 1 - i;
+    points.push(this.body[j].rightSidePoint());
+  }
+  return points;
 }
 Snake.prototype.checkIfDead = function() {
   let head = this.body[0];
@@ -40,9 +56,22 @@ Snake.prototype.checkIfAte = function() {
   }
 }
 Snake.prototype.draw = function() {
-  console.log("drawing the snake");
   this.body.forEach(part => part.draw());
+  for (let i = 1; i < this.body.length; i++){
+    let points = this.body[i].pointsToLeader();
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    ctx.lineTo(points[1].x, points[1].y);
+    ctx.lineTo(points[2].x, points[2].y);
+    ctx.lineTo(points[3].x, points[3].y);
+    ctx.closePath();
+    ctx.fill();
+  }
 }
+// Snake.prototype.draw = function() {
+//   console.log("drawing the snake");
+//   this.body.forEach(part => part.draw());
+// }
 Snake.prototype.turn = function(direction) {
   if(direction == 'left'){
     this.body[0].heading -= this.turningSpeed;
@@ -104,6 +133,34 @@ BodyPart.prototype.behindx = function() {
 }
 BodyPart.prototype.behindy = function() {
   return this.y - 2 * radius * Math.sin(this.heading)
+}
+BodyPart.prototype.pointsToLeader = function() {
+  let points = [new Point(0,0),new Point(0,0),new Point(0,0),new Point(0,0)];
+  points[0].x = this.x + Math.cos(this.heading + Math.PI/2) * radius;
+  points[0].y = this.y + Math.sin(this.heading + Math.PI/2) * radius;
+  points[1].x = this.leader.x + Math.cos(this.heading + Math.PI/2) * radius;
+  points[1].y = this.leader.y + Math.sin(this.heading + Math.PI/2) * radius;
+  points[2].x = this.leader.x + Math.cos(this.heading - Math.PI/2) * radius;
+  points[2].y = this.leader.y + Math.sin(this.heading - Math.PI/2) * radius;
+  points[3].x = this.x + Math.cos(this.heading - Math.PI/2) * radius;
+  points[3].y = this.y + Math.sin(this.heading - Math.PI/2) * radius;
+  return points;
+}
+BodyPart.prototype.leftSidePoint = function() {
+  let point = {
+    x: 0,
+    y: 0
+  }
+  return point;
+}
+BodyPart.prototype.rightSidePoint = function() {
+  let point = {
+    x: 0,
+    y: 0
+  }
+  point.x = this.x + Math.cos(this.heading - Math.PI/2) * radius;
+  point.y = this.y + Math.sin(this.heading - Math.PI/2) * radius;
+  return point;
 }
 
 
