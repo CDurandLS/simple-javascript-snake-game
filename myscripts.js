@@ -70,8 +70,8 @@ Snake.prototype.eat = function() {
   let tail = this.body[this.body.length-1];
   this.body.push(
     new BodyPart(
-      tail.behindx(),
-      tail.behindy(),
+      tail.behindx(2.0),
+      tail.behindy(2.0),
       tail.heading,
       tail
     )
@@ -84,13 +84,6 @@ let BodyPart = function(x, y, heading, leader) {
   this.heading = heading;
   this.leader = leader;
   this.color = "#77CC77";
-  this.previous = new Array();
-  this.previous.push = function() {
-    if (this.length >= 8){
-      this.shift();
-    }
-    return Array.prototype.push.apply(this, arguments);
-  }
 };
 BodyPart.prototype.isCollidingWith = function(obj) {
     let dx = (this.x - obj.x);
@@ -100,23 +93,24 @@ BodyPart.prototype.isCollidingWith = function(obj) {
 BodyPart.prototype.moveAlone = function(amount) {
   this.x += amount * Math.cos(this.heading);
   this.y += amount * Math.sin(this.heading);
-  this.previous.push(new Point(this.x, this.y));
 }
-BodyPart.prototype.behindx = function() {
-  return this.x - 2 * radius * Math.cos(this.heading)
+BodyPart.prototype.behindx = function(n, a) {
+  return this.x - n * radius * Math.cos(this.heading)
 }
-BodyPart.prototype.behindy = function() {
-  return this.y - 2 * radius * Math.sin(this.heading)
+BodyPart.prototype.behindy = function(n, a) {
+  return this.y - n * radius * Math.sin(this.heading)
+}
+BodyPart.prototype.behind = function() {
+  return new Point(this.behindx(1),this.behindy(1));
 }
 BodyPart.prototype.moveToLeader = function() {
-  let p = this.leader.previous[0];
+  let p = this.leader.behind();
   let dx = (this.x - this.leader.x);
   let dy = (this.y - this.leader.y);
   let dist = Math.sqrt(dx*dx + dy*dy);
   this.x += (dist - 2 * radius) * Math.cos(this.heading);
   this.y += (dist - 2 * radius) * Math.sin(this.heading);
   this.heading = Math.atan2(p.y-this.y,p.x-this.x);
-  this.previous.push(new Point(this.x, this.y));
 }
 
 // BodyPart.prototype.moveToLeader = function() {
