@@ -6,7 +6,6 @@ var right = false;
 var snake;
 var food;
 var framerate = 60;
-
 window.addEventListener( "keydown", doKeyDown, true);
 window.addEventListener( "keyup", doKeyUp, true);
 let Point = function(sx, sy){
@@ -189,7 +188,6 @@ function setUpGame() {
   snake = new Snake(400,400);
   let randx = Math.random() * 700 + 50;
   let randy = Math.random() * 700 + 50;
-
   left = false;
   right = false;
   food = new Food(randx, randy);
@@ -202,7 +200,9 @@ function writeInstructions() {
   ctx.fillRect(797, 0, 800, 800);
   ctx.fillRect(0, 797, 800, 800);
   ctx.fillRect(0, 0, 3, 800);
-  ctx.fillText("Use the left and right arrow keys to turn the snake.", 400, 50);
+  if (snake.body.length < 4) {
+    ctx.fillText("Use the left and right arrow keys to turn the snake.", 400, 50);
+  }
 }
 setUpGame();
 function gameUpdate() {
