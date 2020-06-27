@@ -1,6 +1,7 @@
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
-var radius = 20;
+var snakeradius = 20;
+var foodradius = 20;
 var left = false;
 var right = false;
 var snake;
@@ -13,10 +14,10 @@ let Point = function(sx, sy){
   this.y = sy;
 }
 
-let Snake = function(startx, starty) {
+let Snake = function(startx, starty, radius) {
   this.speed = 5;
   this.bodyLength = 1;
-  this.body = [new BodyPart(startx, starty, 0, 0)];
+  this.body = [new BodyPart(startx, starty, 0, 0, radius)];
   this.dead = false;
   this.turningSpeed = ((Math.PI*2)/30)/(framerate/40);
 };
@@ -35,7 +36,7 @@ Snake.prototype.checkIfDead = function() {
       this.dead = true;
     }
   }
-  if (head.x < radius || head.y < radius || head.x > 800-radius || head.y > 800-radius){
+  if (head.x < head.radius || head.y < head.radius || head.x > 800-head.radius || head.y > 800-head.radius){
     this.dead = true;
   }
 }
@@ -75,22 +76,24 @@ Snake.prototype.eat = function() {
       tail.behindx(2.0),
       tail.behindy(2.0),
       tail.heading,
-      tail
+      tail,
+      tail.radius
     )
   );
 }
 
-let BodyPart = function(x, y, heading, leader) {
+let BodyPart = function(x, y, heading, leader, radius) {
   this.x = x;
   this.y = y;
   this.heading = heading;
   this.leader = leader;
+  this.radius = radius;
   this.color = "#77CC77";
 };
 BodyPart.prototype.isCollidingWith = function(obj) {
     let dx = (this.x - obj.x);
     let dy = (this.y - obj.y);
-    return Math.sqrt(dx*dx + dy*dy) < radius * 1.9;
+    return Math.sqrt(dx*dx + dy*dy) < (this.radius + obj.radius)*0.95;
 }
 // Movement function for the lead of the snake
 BodyPart.prototype.moveAlone = function(amount) {
@@ -98,10 +101,10 @@ BodyPart.prototype.moveAlone = function(amount) {
   this.y += amount * Math.sin(this.heading);
 }
 BodyPart.prototype.behindx = function(n, a) {
-  return this.x - n * radius * Math.cos(this.heading)
+  return this.x - n * this.radius * Math.cos(this.heading)
 }
 BodyPart.prototype.behindy = function(n, a) {
-  return this.y - n * radius * Math.sin(this.heading)
+  return this.y - n * this.radius * Math.sin(this.heading)
 }
 BodyPart.prototype.behind = function() {
   return new Point(this.behindx(1),this.behindy(1));
@@ -114,13 +117,13 @@ BodyPart.prototype.moveToLeader = function() {
   let dx = (this.x - this.leader.x);
   let dy = (this.y - this.leader.y);
   let dist = Math.sqrt(dx*dx + dy*dy);
-  this.x += (dist - 2 * radius) * Math.cos(this.heading);
-  this.y += (dist - 2 * radius) * Math.sin(this.heading);
+  this.x += (dist - 2 * this.radius) * Math.cos(this.heading);
+  this.y += (dist - 2 * this.radius) * Math.sin(this.heading);
   this.heading = Math.atan2(p.y-this.y,p.x-this.x);
 }
 
 BodyPart.prototype.draw = function() {
-  drawCircle(this.x, this.y, radius, this.color);
+  drawCircle(this.x, this.y, this.radius, this.color);
 }
 
 // This gets the four points to make a solid 'body chunk'
@@ -130,29 +133,30 @@ BodyPart.prototype.pointsToLeader = function() {
   let dy = (this.y - this.leader.y);
   let direction = Math.atan2(-dy,-dx);
   let points = [new Point(0,0),new Point(0,0),new Point(0,0),new Point(0,0)];
-  points[0].x = this.x        + Math.cos(direction + Math.PI/2) * radius;
-  points[0].y = this.y        + Math.sin(direction + Math.PI/2) * radius;
-  points[1].x = this.leader.x + Math.cos(direction + Math.PI/2) * radius;
-  points[1].y = this.leader.y + Math.sin(direction + Math.PI/2) * radius;
-  points[2].x = this.leader.x + Math.cos(direction - Math.PI/2) * radius;
-  points[2].y = this.leader.y + Math.sin(direction - Math.PI/2) * radius;
-  points[3].x = this.x        + Math.cos(direction - Math.PI/2) * radius;
-  points[3].y = this.y        + Math.sin(direction - Math.PI/2) * radius;
+  points[0].x = this.x        + Math.cos(direction + Math.PI/2) * this.radius;
+  points[0].y = this.y        + Math.sin(direction + Math.PI/2) * this.radius;
+  points[1].x = this.leader.x + Math.cos(direction + Math.PI/2) * this.radius;
+  points[1].y = this.leader.y + Math.sin(direction + Math.PI/2) * this.radius;
+  points[2].x = this.leader.x + Math.cos(direction - Math.PI/2) * this.radius;
+  points[2].y = this.leader.y + Math.sin(direction - Math.PI/2) * this.radius;
+  points[3].x = this.x        + Math.cos(direction - Math.PI/2) * this.radius;
+  points[3].y = this.y        + Math.sin(direction - Math.PI/2) * this.radius;
   return points;
 }
 
-let Food = function() {
-  this.x = Math.random() * 700 + 50;
-  this.y = Math.random() * 700 + 50;
+let Food = function(radius) {
+  this.x = Math.random() * (800 - 4 * radius) + 2 * radius;
+  this.y = Math.random() * (800 - 4 * radius) + 2 * radius;
   this.color = "#DD3333";
+  this.radius = radius;
   this.newLocation;
 };
 Food.prototype.draw = function() {
-  drawCircle(this.x, this.y, radius, this.color);
+  drawCircle(this.x, this.y, this.radius, this.color);
 }
 Food.prototype.newLocation = function() {
-  this.x = Math.random() * 700 + 50;
-  this.y = Math.random() * 700 + 50;
+  this.x = Math.random() * (800 - 4 * this.radius) + 2 * this.radius;
+  this.y = Math.random() * (800 - 4 * this.radius) + 2 * this.radius;
 }
 
 function doKeyDown(e) {
@@ -189,12 +193,10 @@ function draw() {
 
 // Resets the game
 function resetGame() {
-  snake = new Snake(400,400);
-  let randx = Math.random() * 700 + 50;
-  let randy = Math.random() * 700 + 50;
+  snake = new Snake(400,400, snakeradius);
   left = false;
   right = false;
-  food = new Food(randx, randy);
+  food = new Food(foodradius);
 }
 
 // Gives the instructions and draws the border around the game
