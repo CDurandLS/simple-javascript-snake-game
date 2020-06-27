@@ -13,12 +13,13 @@ let Point = function(sx, sy){
   this.x = sx;
   this.y = sy;
 }
+
 let Snake = function(startx, starty) {
   this.speed = (360/framerate);
   this.bodyLength = 1;
   this.body = [new BodyPart(startx, starty, 0, 0)];
   this.dead = false;
-  this.turningSpeed = ((Math.PI*2)/30)/(framerate/40);
+  this.turningSpeed = ((Math.PI*2)/30)/(framerate/30);
 };
 Snake.prototype.move = function() {
   this.body[0].moveAlone(this.speed);
@@ -77,26 +78,21 @@ Snake.prototype.eat = function() {
   );
 }
 
-let BodyPart = function(bx, by, direction, leader) {
-  this.x = bx;
-  this.y = by;
-  this.heading = direction;
+let BodyPart = function(x, y, heading, leader) {
+  this.x = x;
+  this.y = y;
+  this.heading = heading;
   this.leader = leader;
   this.color = "#77CC77";
 };
 BodyPart.prototype.isCollidingWith = function(obj) {
     let dx = (this.x - obj.x);
     let dy = (this.y - obj.y);
-    if (Math.sqrt(dx*dx + dy*dy) < radius * 1.9) {
-      return true;
-    } else {
-      return false;
-    }
+    return Math.sqrt(dx*dx + dy*dy) < radius * 1.9;
 }
 BodyPart.prototype.moveAlone = function(amount) {
   this.x += amount * Math.cos(this.heading);
   this.y += amount * Math.sin(this.heading);
-
 }
 BodyPart.prototype.behindx = function() {
   return this.x - 2 * radius * Math.cos(this.heading)
@@ -168,8 +164,8 @@ function drawCircle(ballx, bally, radius, color) {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   writeInstructions();
-  snake.draw();
   food.draw();
+  snake.draw();
 }
 function setUpGame() {
   snake = new Snake(400,400);
@@ -187,7 +183,7 @@ function writeInstructions() {
   ctx.fillRect(797, 0, 800, 800);
   ctx.fillRect(0, 797, 800, 800);
   ctx.fillRect(0, 0, 3, 800);
-  ctx.fillText("Use the left and right arrow keys to move the snake.", 400, 50);
+  ctx.fillText("Use the left and right arrow keys to turn the snake.", 400, 50);
 }
 setUpGame();
 function gameUpdate() {
