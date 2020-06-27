@@ -245,7 +245,7 @@ function gameUpdate() {
       snake.body[0].heading = axis.dir;
       snake.speed = axis.mag * 5;
     } else {
-      snake.speed = snake.speed * 0.99;
+      snake.speed = snake.speed * 0.95;
     }
   } else {
     if (left)  { 
