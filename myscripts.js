@@ -20,6 +20,7 @@ let Snake = function(startx, starty) {
   this.dead = false;
   this.turningSpeed = ((Math.PI*2)/30)/(framerate/40);
 };
+// Moves the head, and then the rest of the body
 Snake.prototype.move = function() {
   this.body[0].moveAlone(this.speed);
   for (let i = 1; i < this.body.length; i++){
@@ -44,6 +45,8 @@ Snake.prototype.checkIfAte = function() {
     food.newLocation();
   }
 }
+// Draws each body part as a cicle, and then each
+// segment between two body parts as a rectangle
 Snake.prototype.draw = function() {
   this.body.forEach(part => part.draw());
   for (let i = 1; i < this.body.length; i++){
@@ -89,6 +92,7 @@ BodyPart.prototype.isCollidingWith = function(obj) {
     let dy = (this.y - obj.y);
     return Math.sqrt(dx*dx + dy*dy) < radius * 1.9;
 }
+// Movement function for the lead of the snake
 BodyPart.prototype.moveAlone = function(amount) {
   this.x += amount * Math.cos(this.heading);
   this.y += amount * Math.sin(this.heading);
@@ -102,6 +106,9 @@ BodyPart.prototype.behindy = function(n, a) {
 BodyPart.prototype.behind = function() {
   return new Point(this.behindx(1),this.behindy(1));
 }
+
+// This moves the body part up to the boundry of its leader
+// in the direction of the point 1 radius behind it
 BodyPart.prototype.moveToLeader = function() {
   let p = this.leader.behind();
   let dx = (this.x - this.leader.x);
@@ -112,19 +119,12 @@ BodyPart.prototype.moveToLeader = function() {
   this.heading = Math.atan2(p.y-this.y,p.x-this.x);
 }
 
-// BodyPart.prototype.moveToLeader = function() {
-//   let p = this.leader.previous[0];
-//   let px = p.x; let py = p.y;
-//   let dx = (this.x - this.leader.x);
-//   let dy = (this.y - this.leader.y);
-//   let dist = Math.sqrt(dx*dx + dy*dy);
-//   this.x += (dist - 2 * radius) * Math.cos(this.heading);
-//   this.y += (dist - 2 * radius) * Math.sin(this.heading);
-//   this.heading = Math.atan2(-dy,-dx);
-// }
 BodyPart.prototype.draw = function() {
   drawCircle(this.x, this.y, radius, this.color);
 }
+
+// This gets the four points to make a solid 'body chunk'
+// between a body part and the one in front of it
 BodyPart.prototype.pointsToLeader = function() {
   let dx = (this.x - this.leader.x);
   let dy = (this.y - this.leader.y);
@@ -178,13 +178,17 @@ function drawCircle(ballx, bally, radius, color) {
   ctx.fill();
   ctx.closePath();
 }
+
+// Draws the game
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   writeInstructions();
   food.draw();
   snake.draw();
 }
-function setUpGame() {
+
+// Resets the game
+function resetGame() {
   snake = new Snake(400,400);
   let randx = Math.random() * 700 + 50;
   let randy = Math.random() * 700 + 50;
@@ -192,6 +196,8 @@ function setUpGame() {
   right = false;
   food = new Food(randx, randy);
 }
+
+// Gives the instructions and draws the border around the game
 function writeInstructions() {
   ctx.font = "30px Arial";
   ctx.textAlign = "center";
@@ -204,7 +210,9 @@ function writeInstructions() {
     ctx.fillText("Use the left and right arrow keys to turn the snake.", 400, 50);
   }
 }
-setUpGame();
+
+resetGame();
+// Main Game Loop
 function gameUpdate() {
   if (left)  { snake.turn('left'); }
   if (right) { snake.turn('right'); }
@@ -215,7 +223,7 @@ function gameUpdate() {
   if (snake.dead) {
     gameScore = snake.body.length - 1;
     alert(`You died! your score is ${gameScore}`);
-    setUpGame();
+    resetGame();
   }
 }
 setInterval(gameUpdate, 1000/framerate);
