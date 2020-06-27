@@ -7,15 +7,22 @@ var right = false;
 var snake;
 var food;
 var framerate = 60;
+var gp = 0;
 window.addEventListener( "keydown", doKeyDown, true);
 window.addEventListener( "keyup", doKeyUp, true);
+window.addEventListener("gamepadconnected", function(e) {
+  gp = navigator.getGamepads()[e.gamepad.index];
+  console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
+    gp.index, gp.id,
+    gp.buttons.length, gp.axes.length);
+});
 let Point = function(sx, sy){
   this.x = sx;
   this.y = sy;
 }
 
 let Snake = function(startx, starty, radius) {
-  this.speed = 5;
+  this.speed = 0;
   this.bodyLength = 1;
   this.body = [new BodyPart(startx, starty, 0, 0, radius)];
   this.dead = false;
@@ -27,6 +34,7 @@ Snake.prototype.move = function() {
   for (let i = 1; i < this.body.length; i++){
     this.body[i].moveToLeader();
   }
+  this.body[0].heading = (this.body[0].heading) % (Math.PI * 2);
   this.checkIfDead();
 }
 Snake.prototype.checkIfDead = function() {
@@ -61,13 +69,8 @@ Snake.prototype.draw = function() {
     ctx.fill();
   }
 }
-Snake.prototype.turn = function(direction) {
-  if(direction == 'left'){
-    this.body[0].heading -= this.turningSpeed;
-  }
-  if(direction == 'right'){
-    this.body[0].heading += this.turningSpeed;
-  }
+Snake.prototype.turn = function(amount) {
+    this.body[0].heading = (this.body[0].heading + amount) % (Math.PI * 2);
 }
 Snake.prototype.eat = function() {
   let tail = this.body[this.body.length-1];
@@ -117,8 +120,8 @@ BodyPart.prototype.moveToLeader = function() {
   let dx = (this.x - this.leader.x);
   let dy = (this.y - this.leader.y);
   let dist = Math.sqrt(dx*dx + dy*dy);
-  this.x += (dist - 2 * this.radius) * Math.cos(this.heading);
-  this.y += (dist - 2 * this.radius) * Math.sin(this.heading);
+  this.x += (dist - this.radius - this.leader.radius) * Math.cos(this.heading);
+  this.y += (dist - this.radius - this.leader.radius) * Math.sin(this.heading);
   this.heading = Math.atan2(p.y-this.y,p.x-this.x);
 }
 
@@ -197,6 +200,7 @@ function resetGame() {
   left = false;
   right = false;
   food = new Food(foodradius);
+  snake.speed = 0;
 }
 
 // Gives the instructions and draws the border around the game
@@ -213,15 +217,46 @@ function writeInstructions() {
   }
 }
 
+function getAxis() {
+  let speed = gp.axes[0]*gp.axes[0] + gp.axes[1]*gp.axes[1]
+  if (speed > 1) {
+    speed = 1;
+  }
+  let heading = 0;
+  if (speed > 0.2) {
+    heading = Math.atan2(gp.axes[1], gp.axes[0])
+  }
+  let a = {
+    mag: speed,
+    dir: heading
+  };
+  return a;
+}
 resetGame();
 // Main Game Loop
 function gameUpdate() {
-  if (left)  { snake.turn('left'); }
-  if (right) { snake.turn('right'); }
   snake.move();
   snake.checkIfDead();
   snake.checkIfAte();
   draw();
+  if (gp != 0) {
+    let axis = getAxis();
+    if (axis.mag > 0.2) {
+      snake.body[0].heading = axis.dir;
+      snake.speed = axis.mag * 5;
+    } else {
+      snake.speed = snake.speed * 0.99;
+    }
+  } else {
+    if (left)  { 
+      snake.turn(-snake.turningSpeed);
+      snake.speed = 5; 
+    }
+    if (right) { 
+      snake.turn(snake.turningSpeed); 
+      snake.speed = 5;
+    }
+  }
   if (snake.dead) {
     gameScore = snake.body.length - 1;
     alert(`You died! your score is ${gameScore}`);
