@@ -1,100 +1,43 @@
-function doKeyDown(e) {
-  if (e.keyCode == 37) {
-    left = true;
-  }
-  if (e.keyCode == 39) {
-    right = true;
-  }
+const CONFIG = {
+  snakeRadius: 20,
+  foodRadius: 20,
+  snakeSpeed: 5,
+  framerate: 60.0,
+  turningSpeed: (Math.PI)/22,
+  left: 37,
+  right: 39,
 }
 
-function doKeyUp(e) {
-  if (e.keyCode == 37) {
-    left = false;
-  }
-  if (e.keyCode == 39) {
-    right = false;
-  }
-}
-
-function drawCircle(ballx, bally, radius, color) {
-  ctx.beginPath();
-  ctx.arc(ballx, bally, radius, 0, Math.PI*2);
-  ctx.fillStyle = color;
-  ctx.fill();
-  ctx.closePath();
-}
-
-// Draws the game
-function draw(food, snake) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  writeInstructions();
-  food.draw();
-  snake.draw();
-}
-
-// Resets the game
-function resetGame() {
-  snake = new Snake(400,400, snakeradius);
-  left = false;
-  right = false;
-  food = new Food(foodradius);
-  snake.speed = 0;
-}
-
-// Gives the instructions and draws the border around the game
-function writeInstructions() {
-  ctx.font = "30px Arial";
-  ctx.textAlign = "center";
-  ctx.fillStyle = "#000000";
-  ctx.fillRect(0, 0, 800, 3);
-  ctx.fillRect(797, 0, 800, 800);
-  ctx.fillRect(0, 797, 800, 800);
-  ctx.fillRect(0, 0, 3, 800);
-  if (snake.body.length < 4) {
-    ctx.fillText("Use the left and right arrow keys to turn the snake.", 400, 50);
-  }
-}
-
-function getAxis() {
-  let speed = gp.axes[0]*gp.axes[0] + gp.axes[1]*gp.axes[1]
-  if (speed > 1) {
-    speed = 1;
-  }
-  let heading = 0;
-  if (speed > 0.2) {
-    heading = Math.atan2(gp.axes[1], gp.axes[0])
-  }
-  let a = {
-    mag: speed,
-    dir: heading
-  };
-  return a;
-}
-
-let Point = function(sx, sy){
+function Point(sx, sy) {
   this.x = sx;
   this.y = sy;
 }
 
-let Snake = function(startx, starty, radius) {
+function Snake(startx, starty, radius) {
   this.speed = 0;
   this.bodyLength = 1;
   this.body = [new BodyPart(startx, starty, 0, 0, radius)];
   this.dead = false;
-  this.turningSpeed = ((Math.PI*2)/30)/(framerate/40);
+  this.turningSpeed = CONFIG.turningSpeed;
 };
 // Moves the head, and then the rest of the body
-Snake.prototype.move = function() {
-  this.body[0].moveAlone(this.speed);
-  for (let i = 1; i < this.body.length; i++){
-    this.body[i].moveToLeader();
+Snake.prototype.move = function(left, right) {
+  if(left) {
+    this.turn(-CONFIG.turningSpeed);
+    this.speed = CONFIG.snakeSpeed;
   }
+  if (right) {
+    this.turn(CONFIG.turningSpeed);
+    this.speed = CONFIG.snakeSpeed;
+  }
+  this.body.forEach(part => part.move(this.speed));
   this.body[0].heading = (this.body[0].heading) % (Math.PI * 2);
   this.checkIfDead();
 }
+
 Snake.prototype.checkIfDead = function() {
   let head = this.body[0];
-  for (let i=1; i<this.body.length; i++) {
+  for (let i=1; i < this.body.length; i++) {
     if (head.isCollidingWith(this.body[i])){
       this.dead = true;
     }
@@ -103,11 +46,8 @@ Snake.prototype.checkIfDead = function() {
     this.dead = true;
   }
 }
-Snake.prototype.checkIfAte = function() {
-  if (this.body[0].isCollidingWith(food)){
-    this.eat();
-    food.newLocation();
-  }
+Snake.prototype.checkIfAte = function(food) {
+  return (this.body[0].isCollidingWith(food))
 }
 // Draws each body part as a cicle, and then each
 // segment between two body parts as a rectangle
@@ -115,13 +55,13 @@ Snake.prototype.draw = function() {
   this.body.forEach(part => part.draw());
   for (let i = 1; i < this.body.length; i++){
     let points = this.body[i].pointsToLeader();
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
+    CTX.beginPath();
+    CTX.moveTo(points[0].x, points[0].y);
     for(let j = 1; j < 4; j++){
-      ctx.lineTo(points[j].x, points[j].y);
+      CTX.lineTo(points[j].x, points[j].y);
     }
-    ctx.closePath();
-    ctx.fill();
+    CTX.closePath();
+    CTX.fill();
   }
 }
 Snake.prototype.turn = function(amount) {
@@ -140,7 +80,7 @@ Snake.prototype.eat = function() {
   );
 }
 
-let BodyPart = function(x, y, heading, leader, radius) {
+function BodyPart(x, y, heading, leader, radius) {
   this.x = x;
   this.y = y;
   this.heading = heading;
@@ -148,6 +88,13 @@ let BodyPart = function(x, y, heading, leader, radius) {
   this.radius = radius;
   this.color = "#77CC77";
 };
+BodyPart.prototype.move = function(amount) {
+  if(!this.leader) {
+    this.moveAlone(amount);
+  } else {
+    this.moveToLeader();
+  }
+}
 BodyPart.prototype.isCollidingWith = function(obj) {
     let dx = (this.x - obj.x);
     let dy = (this.y - obj.y);
@@ -202,7 +149,7 @@ BodyPart.prototype.pointsToLeader = function() {
   return points;
 }
 
-let Food = function(radius) {
+function Food(radius) {
   this.x = Math.random() * (800 - 4 * radius) + 2 * radius;
   this.y = Math.random() * (800 - 4 * radius) + 2 * radius;
   this.color = "#DD3333";
@@ -217,59 +164,80 @@ Food.prototype.newLocation = function() {
   this.y = Math.random() * (800 - 4 * this.radius) + 2 * this.radius;
 }
 
-window.addEventListener( "keydown", doKeyDown, true);
-window.addEventListener( "keyup", doKeyUp, true);
-window.addEventListener("gamepadconnected", function(e) {
-  gp = navigator.getGamepads()[e.gamepad.index];
-  console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
-    gp.index, gp.id,
-    gp.buttons.length, gp.axes.length);
-});
+const CANVAS = document.getElementById('game');
+const CTX = CANVAS.getContext('2d');
 
+function drawCircle(x, y, radius, color) {
+  CTX.beginPath();
+  CTX.arc(x, y, radius, 0, Math.PI*2);
+  CTX.fillStyle = color;
+  CTX.fill();
+  CTX.closePath();
+}
 
-// Main Game Loop
-const gameUpdate = (() => {
-  resetGame();
-  const canvas = document.getElementById("myCanvas");
-  const ctx = canvas.getContext("2d");
-  const snakeradius = 20;
-  const foodradius = 20;
-  const left = false;
-  const right = false;
-  const snake;
-  const food;
-  const framerate = 60;
-  const gp = 0;
-
-  return () => {
-    snake.move();
-    snake.checkIfDead();
-    snake.checkIfAte();
-    draw();
-    if (gp != 0) {
-      let axis = getAxis();
-      if (axis.mag > 0.2) {
-        snake.body[0].heading = axis.dir;
-        snake.speed = axis.mag * 5;
-      } else {
-        snake.speed = snake.speed * 0.95;
-      }
-    } else {
-      if (left)  { 
-        snake.turn(-snake.turningSpeed);
-        snake.speed = 5; 
-      }
-      if (right) { 
-        snake.turn(snake.turningSpeed); 
-        snake.speed = 5;
-      }
+const Game = {
+  init() {
+    window.removeEventListener('keydown', this.keyDown.bind(this));
+    window.removeEventListener('keyup', this.keyUp.bind(this));
+    window.addEventListener("keydown", this.keyDown.bind(this));
+    window.addEventListener("keyup", this.keyUp.bind(this));  
+    this.snake = new Snake(400, 400, CONFIG.snakeRadius);
+    this.left = false;
+    this.right = false;
+    this.food = new Food(CONFIG.foodRadius);
+    this.snake.speed = 0;
+  },
+  keyDown(e) {
+    if (e.keyCode === CONFIG.left) {
+      this.left = true;
+      e.preventDefault();
+    } else if(e.keyCode === CONFIG.right) {
+      this.right = true;
+      e.preventDefault();
     }
-    if (snake.dead) {
-      gameScore = snake.body.length - 1;
-      alert(`You died! your score is ${gameScore}`);
-      resetGame();
+  },
+  keyUp(e) {
+    if (e.keyCode === CONFIG.left) {
+      this.left = false;
+      e.preventDefault();
+    } else if(e.keyCode === CONFIG.right) {
+      this.right = false;
+      e.preventDefault();
     }
-  }
-})()
-setInterval(gameUpdate, 1000/framerate);
-// setInterval(snake.eat, 1000);
+  },
+  draw() {
+    CTX.clearRect(0, 0, CANVAS.width, CANVAS.height);
+    this.writeInstructions();
+    this.food.draw();
+    this.snake.draw();
+  },
+  writeInstructions() {
+    CTX.font = "30px Arial";
+    CTX.textAlign = "center";
+    CTX.fillStyle = "#000000";
+    CTX.fillRect(0, 0, 800, 3);
+    CTX.fillRect(797, 0, 800, 800);
+    CTX.fillRect(0, 797, 800, 800);
+    CTX.fillRect(0, 0, 3, 800);
+    if (this.snake.body.length < 4) {
+      CTX.fillText("Use the left and right arrow keys to turn the snake.", 400, 50);
+    }
+  },
+  gameLoop() {
+    this.snake.move(this.left, this.right);
+    this.snake.checkIfDead();
+    if(this.snake.checkIfAte(this.food)) {
+      this.food.newLocation();
+      this.snake.eat();
+    };
+    this.draw();
+    if (this.snake.dead) {
+      const gameScore = this.snake.body.length - 1;
+      alert(`You died! your score is ${gameScore}.`)
+      this.init();
+    }
+  },
+}
+console.log("why")
+Game.init();
+setInterval(Game.gameLoop.bind(Game), 1000 / CONFIG.framerate);
