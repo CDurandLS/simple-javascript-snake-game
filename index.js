@@ -238,6 +238,5 @@ const Game = {
     }
   },
 }
-console.log("why")
 Game.init();
 setInterval(Game.gameLoop.bind(Game), 1000 / CONFIG.framerate);
